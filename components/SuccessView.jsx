@@ -83,7 +83,11 @@ export default function SuccessView({ order, navigate }) {
             <div>
               <span className="text-xs text-[#6B4432]">Payment: </span>
               <span className="text-xs font-bold text-[#173B2A]">
-                {order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online / UPI'}
+                {order.paymentMethod === 'COD'
+                  ? 'Cash on Delivery'
+                  : order.paymentMethod === 'Direct UPI'
+                  ? 'Direct UPI (QR / Apps)'
+                  : 'Online Payment (Razorpay)'}
               </span>
             </div>
             <div className="text-right">

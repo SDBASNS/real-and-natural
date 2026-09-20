@@ -245,6 +245,11 @@ export default function AdminView({ navigate }) {
                       <div className="text-[10px] font-normal text-[#6B4432]/70">
                         {o.paymentMethod}
                       </div>
+                      {o.notes && (
+                        <div className="text-[10px] text-emerald-900 bg-emerald-50 border border-emerald-200/60 rounded px-1.5 py-0.5 mt-1 font-mono break-all font-normal">
+                          {o.notes}
+                        </div>
+                      )}
                     </td>
 
                     <td className="py-4 px-4">
