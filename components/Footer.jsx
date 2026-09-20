@@ -93,13 +93,36 @@ export default function Footer({ navigate }) {
           {/* Col 3: Support */}
           <div>
             <h4 className="text-[#F7F1E5] font-semibold mb-3 text-sm tracking-wide uppercase">
-              Support
+              Customer Care
             </h4>
             <ul className="space-y-2 text-sm text-[#F7F1E5]/75">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('orders');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#C49A4A] transition font-medium text-[#F7F1E5] underline underline-offset-2"
+                >
+                  📦 Track Your Order
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('orders');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#C49A4A] transition"
+                >
+                  My Orders History
+                </button>
+              </li>
               <li>Free shipping on orders above ₹999</li>
               <li>Hygienic vacuum sealed packaging</li>
               <li>Dispatched within 24-48 hours</li>
-              <li>Pan-India courier coverage</li>
             </ul>
           </div>
 

@@ -20,16 +20,29 @@ import {
 import { INDIAN_STATES } from '@/lib/products';
 import { STATE_CITIES } from '@/lib/locations';
 
-export default function CheckoutView({ cart, onOrderPlaced, navigate }) {
+export default function CheckoutView({ cart, customer, onOpenAuth, onOrderPlaced, navigate }) {
   const [form, setForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
+    name: customer?.name || '',
+    phone: customer?.rawPhone || (customer?.phone ? customer.phone.replace('+91', '') : ''),
+    email: customer?.email || '',
     address: '',
-    city: '',
+    city: customer?.city || '',
     state: 'Maharashtra',
     pincode: '',
   });
+
+  // Sync when customer logs in
+  useEffect(() => {
+    if (customer) {
+      setForm((prev) => ({
+        ...prev,
+        name: customer.name || prev.name,
+        phone: customer.rawPhone || (customer.phone ? customer.phone.replace('+91', '') : prev.phone),
+        email: customer.email || prev.email,
+        city: customer.city || prev.city,
+      }));
+    }
+  }, [customer]);
 
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -362,7 +375,39 @@ export default function CheckoutView({ cart, onOrderPlaced, navigate }) {
         
         {/* Checkout Form */}
         <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-6">
-          
+          {/* Customer Login / Autofill Banner */}
+          {customer ? (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200/80 rounded-2xl flex items-center justify-between text-xs text-emerald-900">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  Logged in as <strong>{customer.name}</strong> ({customer.phone || customer.email})
+                </span>
+              </div>
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-full hidden sm:inline">
+                Details Auto-filled
+              </span>
+            </div>
+          ) : (
+            <div className="p-4 bg-white border border-[#173B2A]/15 rounded-2xl flex items-center justify-between text-xs shadow-sm">
+              <div>
+                <div className="font-semibold text-[#173B2A] text-sm">
+                  Already have an account?
+                </div>
+                <div className="text-[#6B4432] mt-0.5">
+                  Log in for 1-click checkout and instant order tracking.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="px-4 py-2 rounded-full bg-[#173B2A] text-[#F7F1E5] font-semibold text-xs hover:bg-[#0F2A1D] transition cursor-pointer shrink-0 ml-3"
+              >
+                Log In
+              </button>
+            </div>
+          )}
+
           {/* Shipping Address Box */}
           <div className="bg-white rounded-2xl p-6 border border-[#173B2A]/10 shadow-sm space-y-4">
             <div className="flex items-center justify-between pb-1 border-b border-[#173B2A]/10">

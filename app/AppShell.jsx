@@ -12,6 +12,8 @@ import CheckoutView from '@/components/CheckoutView';
 import SuccessView from '@/components/SuccessView';
 import AdminView from '@/components/AdminView';
 import SearchOverlay from '@/components/SearchOverlay';
+import AuthModal from '@/components/AuthModal';
+import MyOrdersView from '@/components/MyOrdersView';
 
 export default function AppShell({ initialProducts }) {
   const [currentView, setCurrentView] = useState('home');
@@ -21,15 +23,24 @@ export default function AppShell({ initialProducts }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [shopCategory, setShopCategory] = useState('All');
 
-  // Load cart from localStorage on mount
+  // Customer Account & Authentication State
+  const [customer, setCustomer] = useState(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+
+  // Load cart & customer from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('rn_cart');
-      if (saved) {
-        setCart(JSON.parse(saved));
+      const savedCart = localStorage.getItem('rn_cart');
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
+      const savedCustomer = localStorage.getItem('rn_customer');
+      if (savedCustomer) {
+        setCustomer(JSON.parse(savedCustomer));
       }
     } catch (err) {
-      console.error('Failed to load cart from storage:', err);
+      console.error('Failed to load storage data:', err);
     }
   }, []);
 
@@ -100,6 +111,27 @@ export default function AppShell({ initialProducts }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Auth Handlers
+  const handleLogin = (customerData) => {
+    setCustomer(customerData);
+    try {
+      localStorage.setItem('rn_customer', JSON.stringify(customerData));
+    } catch (_) {}
+  };
+
+  const handleLogout = () => {
+    setCustomer(null);
+    try {
+      localStorage.removeItem('rn_customer');
+    } catch (_) {}
+    toast.info('You have logged out successfully');
+  };
+
+  const openAuth = (mode = 'login') => {
+    setAuthMode(mode);
+    setIsAuthOpen(true);
+  };
+
   const totalCartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   return (
@@ -109,6 +141,9 @@ export default function AppShell({ initialProducts }) {
         navigate={navigate}
         cartCount={totalCartCount}
         onOpenSearch={() => setIsSearchOpen(true)}
+        customer={customer}
+        onOpenAuth={() => openAuth('login')}
+        onLogout={handleLogout}
       />
 
       <main className="flex-1">
@@ -142,6 +177,15 @@ export default function AppShell({ initialProducts }) {
           />
         )}
 
+        {currentView === 'orders' && (
+          <MyOrdersView
+            customer={customer}
+            onOpenAuth={() => openAuth('login')}
+            onAddToCart={handleAddToCart}
+            navigate={navigate}
+          />
+        )}
+
         {currentView === 'cart' && (
           <CartView
             cart={cart}
@@ -158,6 +202,8 @@ export default function AppShell({ initialProducts }) {
         {currentView === 'checkout' && (
           <CheckoutView
             cart={cart}
+            customer={customer}
+            onOpenAuth={() => openAuth('login')}
             onOrderPlaced={handleOrderPlaced}
             navigate={navigate}
           />
@@ -182,6 +228,14 @@ export default function AppShell({ initialProducts }) {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         onSelectProduct={handleSelectProduct}
+      />
+
+      {/* Flipkart-style Customer Login & Create Account Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onLogin={handleLogin}
+        initialMode={authMode}
       />
     </div>
   );

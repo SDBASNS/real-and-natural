@@ -1,13 +1,46 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sparkles, Menu, X, Search, User, ShoppingCart, ShieldCheck } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  Sparkles, 
+  Menu, 
+  X, 
+  Search, 
+  User, 
+  ShoppingCart, 
+  ShieldCheck, 
+  Package, 
+  LogOut, 
+  ChevronDown 
+} from 'lucide-react';
 
-export default function Navbar({ currentView, navigate, cartCount = 0, onOpenSearch }) {
+export default function Navbar({ 
+  currentView, 
+  navigate, 
+  cartCount = 0, 
+  onOpenSearch,
+  customer = null,
+  onOpenAuth = () => {},
+  onLogout = () => {},
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef(null);
+
+  // Close account dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target)) {
+        setAccountMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleNavClick = (view, sectionId) => {
     setMobileMenuOpen(false);
+    setAccountMenuOpen(false);
     if (view === 'home' && sectionId) {
       if (currentView !== 'home') {
         navigate('home');
@@ -63,7 +96,7 @@ export default function Navbar({ currentView, navigate, cartCount = 0, onOpenSea
           </div>
 
           {/* Desktop Links */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-7 lg:gap-8">
             <button
               onClick={() => handleNavClick('home')}
               className={`text-sm font-medium transition relative group ${
@@ -93,18 +126,25 @@ export default function Navbar({ currentView, navigate, cartCount = 0, onOpenSea
             </button>
 
             <button
+              onClick={() => handleNavClick('orders')}
+              className={`text-sm font-medium transition relative group flex items-center gap-1.5 ${
+                currentView === 'orders' ? 'text-[#173B2A] font-semibold' : 'text-[#173B2A]/80 hover:text-[#173B2A]'
+              }`}
+            >
+              <Package className="w-4 h-4 text-[#C49A4A]" />
+              <span>My Orders</span>
+              <span
+                className={`absolute -bottom-1 left-0 h-[2px] bg-[#C49A4A] transition-all ${
+                  currentView === 'orders' ? 'w-full' : 'w-0 group-hover:w-full'
+                }`}
+              />
+            </button>
+
+            <button
               onClick={() => handleNavClick('home', 'why-us')}
               className="text-sm font-medium text-[#173B2A]/80 hover:text-[#173B2A] transition relative group"
             >
               Why Us
-              <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-[#C49A4A] transition-all group-hover:w-full" />
-            </button>
-
-            <button
-              onClick={() => handleNavClick('home', 'farm-to-home')}
-              className="text-sm font-medium text-[#173B2A]/80 hover:text-[#173B2A] transition relative group"
-            >
-              Our Process
               <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-[#C49A4A] transition-all group-hover:w-full" />
             </button>
 
@@ -117,8 +157,8 @@ export default function Navbar({ currentView, navigate, cartCount = 0, onOpenSea
             </button>
           </nav>
 
-          {/* Right Actions: Search, Admin, Cart */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          {/* Right Actions: Search, Customer Account/Login, Admin, Cart */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={onOpenSearch}
               className="p-2 text-[#173B2A] hover:text-[#C49A4A] transition rounded-full hover:bg-white/60"
@@ -128,18 +168,63 @@ export default function Navbar({ currentView, navigate, cartCount = 0, onOpenSea
               <Search className="w-5 h-5" />
             </button>
 
-            <button
-              onClick={() => handleNavClick('admin')}
-              className={`p-2 transition rounded-full hover:bg-white/60 hidden sm:flex items-center gap-1 text-xs font-semibold ${
-                currentView === 'admin' ? 'text-[#C49A4A]' : 'text-[#173B2A] hover:text-[#C49A4A]'
-              }`}
-              aria-label="Admin Dashboard"
-              title="Admin Portal"
-            >
-              <User className="w-5 h-5" />
-              <span className="hidden lg:inline">Admin</span>
-            </button>
+            {/* Customer Account / Login */}
+            {customer ? (
+              <div className="relative" ref={accountMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-full bg-white border border-[#173B2A]/15 hover:border-[#173B2A]/30 text-xs font-semibold text-[#173B2A] transition shadow-sm"
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#173B2A] text-[#F7F1E5] flex items-center justify-center text-[11px] font-bold">
+                    {customer.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="max-w-[85px] truncate hidden sm:inline">
+                    {customer.name?.split(' ')[0]}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#6B4432]/70" />
+                </button>
 
+                {accountMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-[#173B2A]/10 py-2 z-50 animate-fadeIn">
+                    <div className="px-4 py-2 border-b border-[#173B2A]/10 text-xs">
+                      <div className="font-bold text-[#173B2A] truncate">{customer.name}</div>
+                      <div className="text-[10px] text-[#6B4432] truncate">{customer.phone || customer.email}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleNavClick('orders')}
+                      className="w-full px-4 py-2 text-left text-xs font-medium text-[#173B2A] hover:bg-[#F7F1E5] flex items-center gap-2"
+                    >
+                      <Package className="w-4 h-4 text-[#C49A4A]" />
+                      <span>My Orders</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full px-4 py-2 text-left text-xs font-medium text-rose-700 hover:bg-rose-50 flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-full bg-white border border-[#173B2A]/15 hover:border-[#173B2A]/40 text-xs font-semibold text-[#173B2A] hover:bg-[#173B2A]/5 transition shadow-sm cursor-pointer"
+              >
+                <User className="w-4 h-4 text-[#C49A4A]" />
+                <span>Login</span>
+              </button>
+            )}
+
+            {/* Cart Button */}
             <button
               onClick={() => handleNavClick('cart')}
               className="relative p-2 text-[#173B2A] hover:text-[#C49A4A] transition rounded-full hover:bg-white/60"
@@ -158,6 +243,37 @@ export default function Navbar({ currentView, navigate, cartCount = 0, onOpenSea
         {/* Mobile Slide-down Drawer */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-[#173B2A]/10 bg-[#F7F1E5] px-5 py-4 space-y-3 shadow-xl">
+            {customer ? (
+              <div className="p-3 rounded-xl bg-white border border-[#173B2A]/10 mb-2 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-[#173B2A]">{customer.name}</div>
+                  <div className="text-[10px] text-[#6B4432]">{customer.phone || customer.email}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onLogout();
+                  }}
+                  className="text-xs text-rose-600 font-semibold flex items-center gap-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAuth();
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#173B2A] text-[#F7F1E5] text-xs font-semibold flex items-center justify-center gap-2 shadow-sm"
+              >
+                <User className="w-4 h-4 text-[#C49A4A]" />
+                <span>Login / Create Account</span>
+              </button>
+            )}
+
             <button
               onClick={() => handleNavClick('home')}
               className="block w-full text-left py-2 font-medium text-[#173B2A] hover:text-[#C49A4A] text-base"
@@ -171,16 +287,17 @@ export default function Navbar({ currentView, navigate, cartCount = 0, onOpenSea
               Shop All Products
             </button>
             <button
+              onClick={() => handleNavClick('orders')}
+              className="block w-full text-left py-2 font-medium text-[#173B2A] hover:text-[#C49A4A] text-base flex items-center justify-between"
+            >
+              <span>My Orders &amp; Tracking</span>
+              <Package className="w-4 h-4 text-[#C49A4A]" />
+            </button>
+            <button
               onClick={() => handleNavClick('home', 'why-us')}
               className="block w-full text-left py-2 font-medium text-[#173B2A] hover:text-[#C49A4A] text-base"
             >
               Why Real &amp; Natural
-            </button>
-            <button
-              onClick={() => handleNavClick('home', 'farm-to-home')}
-              className="block w-full text-left py-2 font-medium text-[#173B2A] hover:text-[#C49A4A] text-base"
-            >
-              Farm to Home Process
             </button>
             <button
               onClick={() => handleNavClick('home', 'contact')}
@@ -188,13 +305,14 @@ export default function Navbar({ currentView, navigate, cartCount = 0, onOpenSea
             >
               Contact Us
             </button>
-            <div className="pt-2 border-t border-[#173B2A]/10 flex items-center justify-between">
+
+            <div className="pt-3 border-t border-[#173B2A]/10 flex items-center justify-between">
               <button
                 onClick={() => handleNavClick('admin')}
-                className="text-xs font-semibold text-[#173B2A] hover:text-[#C49A4A] flex items-center gap-1.5"
+                className="text-xs font-semibold text-[#173B2A]/70 hover:text-[#C49A4A] flex items-center gap-1.5"
               >
-                <ShieldCheck className="w-4 h-4 text-[#C49A4A]" />
-                Store Admin Portal
+                <ShieldCheck className="w-3.5 h-3.5 text-[#C49A4A]" />
+                Merchant Admin
               </button>
               <button
                 onClick={() => handleNavClick('cart')}
