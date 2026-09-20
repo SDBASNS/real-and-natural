@@ -25,43 +25,69 @@ export async function POST(request) {
 
     let smsSent = false;
     let provider = 'demo';
+    let fast2smsDebug = null;
 
     // 1. FAST2SMS Integration (Instant Indian SMS Gateway)
-    const fast2SmsKey = process.env.FAST2SMS_API_KEY;
+    const fast2SmsKey = (process.env.FAST2SMS_API_KEY || '').trim();
     if (fast2SmsKey && cleanPhone) {
       try {
-        const getUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${encodeURIComponent(fast2SmsKey)}&route=otp&variables_values=${generatedOtp}&flash=0&numbers=${cleanPhone}`;
-        const f2sRes = await fetch(getUrl, { method: 'GET' });
-        const f2sData = await f2sRes.json();
+        // Attempt 1: Dedicated numeric OTP route (GET)
+        const getOtpUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${encodeURIComponent(fast2SmsKey)}&route=otp&variables_values=${generatedOtp}&flash=0&numbers=${cleanPhone}`;
+        const f2sRes = await fetch(getOtpUrl, { method: 'GET' });
+        const f2sData = await f2sRes.json().catch(() => null);
+        fast2smsDebug = f2sData;
+
         if (f2sData && (f2sData.return === true || f2sData.status_code === 200)) {
           smsSent = true;
-          provider = 'Fast2SMS';
+          provider = 'Fast2SMS (OTP Route)';
         } else {
-          console.warn('[Fast2SMS] GET attempt response:', f2sData);
-          // Fallback to POST
-          const postRes = await fetch('https://www.fast2sms.com/dev/bulkV2', {
-            method: 'POST',
-            headers: {
-              'authorization': fast2SmsKey,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              route: 'otp',
-              variables_values: String(generatedOtp),
-              numbers: cleanPhone,
-            }),
-          });
-          const postData = await postRes.json();
-          if (postData && (postData.return === true || postData.status_code === 200)) {
+          console.warn('[Fast2SMS] GET route=otp returned:', f2sData);
+
+          // Attempt 2: Quick SMS route=q without DLT requirement
+          const qMsg = `Your Real & Natural login code is ${generatedOtp}. Valid for 5 minutes.`;
+          const getQUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${encodeURIComponent(fast2SmsKey)}&route=q&message=${encodeURIComponent(qMsg)}&language=english&flash=0&numbers=${cleanPhone}`;
+          const qRes = await fetch(getQUrl, { method: 'GET' });
+          const qData = await qRes.json().catch(() => null);
+
+          if (qData && (qData.return === true || qData.status_code === 200)) {
             smsSent = true;
-            provider = 'Fast2SMS';
+            provider = 'Fast2SMS (Quick Route)';
+            fast2smsDebug = qData;
           } else {
-            console.warn('[Fast2SMS] POST attempt response:', postData);
+            console.warn('[Fast2SMS] GET route=q returned:', qData);
+
+            // Attempt 3: POST method with route=otp
+            const postRes = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+              method: 'POST',
+              headers: {
+                'authorization': fast2SmsKey,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                route: 'otp',
+                variables_values: String(generatedOtp),
+                numbers: cleanPhone,
+              }),
+            });
+            const postData = await postRes.json().catch(() => null);
+            if (postData && (postData.return === true || postData.status_code === 200)) {
+              smsSent = true;
+              provider = 'Fast2SMS (POST Route)';
+              fast2smsDebug = postData;
+            } else {
+              console.warn('[Fast2SMS] POST route=otp returned:', postData);
+              fast2smsDebug = postData || qData || f2sData;
+            }
           }
         }
       } catch (err) {
         console.error('[Fast2SMS] Exception:', err.message);
+        fast2smsDebug = { exception: err.message };
       }
+    } else if (!fast2SmsKey && cleanPhone) {
+      fast2smsDebug = { 
+        warning: 'FAST2SMS_API_KEY environment variable is not present or empty in this deployment runtime' 
+      };
     }
 
     // 2. TWILIO Integration
@@ -101,7 +127,9 @@ export async function POST(request) {
       success: true,
       message: smsSent ? `OTP sent via ${provider}` : 'OTP generated',
       isLiveSms: smsSent,
-      previewOtp: smsSent ? undefined : generatedOtp,
+      hasKey: Boolean(fast2SmsKey),
+      debug: fast2smsDebug,
+      previewOtp: generatedOtp,
     });
   } catch (error) {
     console.error('Send OTP Error:', error);

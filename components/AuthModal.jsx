@@ -17,6 +17,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
   const [timer, setTimer] = useState(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [liveSmsActive, setLiveSmsActive] = useState(false);
+  const [gatewayStatus, setGatewayStatus] = useState(null);
   const [previewOtp, setPreviewOtp] = useState('');
   const otpInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
@@ -24,6 +25,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     setMode(initialMode);
     setStep('input');
     setLiveSmsActive(false);
+    setGatewayStatus(null);
     setPreviewOtp('');
   }, [initialMode, isOpen]);
 
@@ -80,15 +82,25 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
       if (data.previewOtp) {
         setPreviewOtp(data.previewOtp);
       }
+      setGatewayStatus({
+        isLiveSms: Boolean(data.isLiveSms),
+        hasKey: Boolean(data.hasKey),
+        provider: data.provider,
+        debug: data.debug,
+      });
       setStep('otp');
       setTimer(30);
-      toast.success(
-        data.isLiveSms 
-          ? `OTP sent to +91 ${phone} via SMS!` 
-          : useEmail 
-          ? `OTP sent to ${email}` 
-          : `OTP sent to +91 ${phone}`
-      );
+
+      if (data.isLiveSms) {
+        toast.success(`📱 SMS OTP sent to +91 ${phone}!`);
+      } else if (!data.hasKey) {
+        toast.info('Fast2SMS key added in Vercel needs a Redeploy to activate live SMS.', { duration: 6000 });
+      } else if (data.debug?.message) {
+        const msg = Array.isArray(data.debug.message) ? data.debug.message[0] : String(data.debug.message);
+        toast.info(`Fast2SMS Gateway: ${msg}`, { duration: 6000 });
+      } else {
+        toast.success(useEmail ? `OTP sent to ${email}` : `OTP sent to +91 ${phone}`);
+      }
     } catch (err) {
       toast.error(err.message || 'Error sending OTP');
     } finally {
@@ -178,9 +190,29 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
       if (data.previewOtp) {
         setPreviewOtp(data.previewOtp);
       }
-      toast.success('New OTP has been sent!');
+      setLiveSmsActive(Boolean(data.isLiveSms));
+      setGatewayStatus({
+        isLiveSms: Boolean(data.isLiveSms),
+        hasKey: Boolean(data.hasKey),
+        provider: data.provider,
+        debug: data.debug,
+      });
+      if (data.isLiveSms) {
+        toast.success(`New SMS OTP sent to +91 ${phone}!`);
+      } else {
+        toast.success('New OTP generated!');
+      }
     } catch (_) {
       toast.info('OTP resent');
+    }
+  };
+
+  const handleAutoFillOtp = (code) => {
+    if (!code) return;
+    const digits = String(code).split('').slice(0, 4);
+    setOtp(digits);
+    if (otpInputRefs[3].current) {
+      otpInputRefs[3].current.focus();
     }
   };
 
@@ -427,29 +459,56 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
                 </div>
 
                 {/* Status / WhatsApp OTP Option */}
-                <div className="space-y-2">
-                  <div className="text-center p-2.5 rounded bg-blue-50 text-[#2874F0] text-xs font-medium border border-blue-100">
-                    {liveSmsActive ? (
-                      <span>📱 Live SMS OTP dispatched to your mobile number!</span>
-                    ) : (
-                      <span>
-                        Verification Code: <strong className="font-mono text-sm">{previewOtp || '1234'}</strong>
-                      </span>
-                    )}
-                  </div>
+                <div className="space-y-2.5">
+                  {liveSmsActive ? (
+                    <div className="text-center p-3 rounded bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        <span>📱 Real SMS OTP sent to +91 {phone}!</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 font-normal mt-1">
+                        Please check your phone's SMS messages inbox.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded bg-blue-50/90 text-[#2874F0] text-xs font-medium border border-blue-100 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span>
+                          Verification Code: <strong className="font-mono text-sm tracking-wider text-[#212121]">{previewOtp || '1234'}</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleAutoFillOtp(previewOtp || '1234')}
+                          className="text-[11px] bg-[#2874F0] text-white px-2 py-0.5 rounded font-semibold hover:bg-blue-700 transition cursor-pointer"
+                        >
+                          Auto-fill
+                        </button>
+                      </div>
+
+                      {gatewayStatus && !gatewayStatus.hasKey && (
+                        <div className="text-[11px] text-amber-900 bg-amber-50 p-2 rounded border border-amber-200 text-left">
+                          ⚠️ <strong>Vercel Action Needed:</strong> FAST2SMS_API_KEY was added in Vercel. In Vercel, click <strong>Deployments &rarr; ... &rarr; Redeploy</strong> so the environment variable takes effect.
+                        </div>
+                      )}
+
+                      {gatewayStatus?.debug?.message && (
+                        <div className="text-[11px] text-gray-600 bg-white p-2 rounded border border-gray-200 text-left font-sans">
+                          <strong>Gateway status:</strong> {Array.isArray(gatewayStatus.debug.message) ? gatewayStatus.debug.message.join(', ') : JSON.stringify(gatewayStatus.debug.message)}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* WhatsApp option if SMS has delay */}
-                  {!liveSmsActive && (
-                    <a
-                      href={waOtpLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full py-2 px-3 rounded bg-emerald-50 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1.5 border border-emerald-200 hover:bg-emerald-100 transition"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Tap to receive &amp; confirm on WhatsApp</span>
-                    </a>
-                  )}
+                  <a
+                    href={waOtpLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2 px-3 rounded bg-emerald-50 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1.5 border border-emerald-200 hover:bg-emerald-100 transition"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tap to receive &amp; confirm on WhatsApp</span>
+                  </a>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-[#878787]">
