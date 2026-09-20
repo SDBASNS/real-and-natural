@@ -2,15 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { 
-  X, 
-  Mail, 
-  Package, 
-  Sparkles, 
-  ArrowRight, 
-  CheckCircle2, 
-  User
-} from 'lucide-react';
+import { X, ArrowRight, MessageSquare, Check, RefreshCw } from 'lucide-react';
 
 export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'login' }) {
   const [mode, setMode] = useState(initialMode); // 'login' or 'signup'
@@ -18,7 +10,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [city, setCity] = useState('');
   
   // OTP Step
   const [step, setStep] = useState('input'); // 'input' or 'otp'
@@ -52,7 +43,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
   };
 
   const handleRequestOtp = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (mode === 'signup' && !name.trim()) {
       toast.error('Please enter your full name');
       return;
@@ -93,7 +84,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
       setTimer(30);
       toast.success(
         data.isLiveSms 
-          ? `Real SMS OTP sent to +91 ${phone}!` 
+          ? `OTP sent to +91 ${phone} via SMS!` 
           : useEmail 
           ? `OTP sent to ${email}` 
           : `OTP sent to +91 ${phone}`
@@ -153,7 +144,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
         phone: phone ? `+91${phone}` : '',
         rawPhone: phone,
         email: email.trim(),
-        city: city.trim(),
         loggedInAt: new Date().toISOString(),
       };
 
@@ -161,7 +151,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
         localStorage.setItem('rn_customer', JSON.stringify(customerData));
       } catch (_) {}
 
-      toast.success(`Welcome to Real & Natural, ${customerName}!`);
+      toast.success(`Welcome back, ${customerName}!`);
       onLogin(customerData);
       onClose();
     } catch (err) {
@@ -194,318 +184,333 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     }
   };
 
+  const currentDisplayTarget = useEmail ? email : `+91 ${phone}`;
+  const waOtpLink = `https://wa.me/917745835883?text=${encodeURIComponent(
+    `Hi Real & Natural! My OTP verification code is: ${previewOtp || '1234'}. Please verify my phone number ${phone}.`
+  )}`;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fadeIn">
-      <div 
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#173B2A]/10 flex flex-col md:flex-row transform transition-all"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Close Button */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+      {/* Outer wrapper to hold modal and close button */}
+      <div className="relative w-full max-w-[740px]">
+        {/* Flipkart-style floating close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-[#173B2A]/5 hover:bg-[#173B2A]/10 text-[#173B2A] transition cursor-pointer"
+          className="absolute -top-10 right-0 sm:-right-8 text-white/90 hover:text-white p-1 transition cursor-pointer text-2xl font-light"
           aria-label="Close dialog"
         >
-          <X className="w-5 h-5" />
+          ✕
         </button>
 
-        {/* Left Side: Flipkart-style Brand Highlight */}
-        <div className="md:w-5/12 bg-gradient-to-br from-[#173B2A] to-[#0A1D13] text-[#F7F1E5] p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-[#C49A4A]/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div>
-            <div className="flex items-center gap-1.5 text-[#C49A4A] text-xs uppercase tracking-wider font-bold mb-3">
-              <Sparkles className="w-4 h-4" />
-              <span>Real &amp; Natural</span>
+        {/* Modal Container */}
+        <div 
+          className="w-full bg-white rounded-sm shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[460px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* ======================================================== */}
+          {/* LEFT PANEL: Flipkart Royal Blue (#2874F0)                */}
+          {/* ======================================================== */}
+          <div className="md:w-[42%] bg-[#2874F0] text-white p-8 sm:p-9 flex flex-col justify-between relative overflow-hidden select-none">
+            <div>
+              <h2 className="text-2xl sm:text-[28px] font-bold tracking-tight">
+                {step === 'otp' 
+                  ? 'Verify with OTP' 
+                  : mode === 'signup' 
+                  ? "Looks like you're new here!" 
+                  : 'Login'}
+              </h2>
+              <p className="mt-4 text-sm sm:text-[15px] text-[#DBE6FD] leading-relaxed font-normal">
+                {step === 'otp'
+                  ? `We have sent an OTP to ${currentDisplayTarget}`
+                  : mode === 'signup'
+                  ? 'Sign up with your mobile number to get started'
+                  : 'Get access to your Orders, Wishlist and Recommendations'}
+              </p>
             </div>
 
-            <h2 className="font-serif-display text-2xl sm:text-3xl font-bold leading-tight">
-              {mode === 'login' ? 'Login' : 'Create Account'}
-            </h2>
+            {/* Flipkart-style SVG Vector Illustration (Laptop, Bag, Heart) */}
+            <div className="mt-8 pt-6 flex justify-center items-end">
+              <svg 
+                viewBox="0 0 240 140" 
+                className="w-48 h-28 opacity-95 text-white" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Sun/Cloud background */}
+                <circle cx="95" cy="55" r="22" fill="#FEE180" />
+                <path d="M75 65 C75 58, 85 55, 95 55 C105 55, 115 58, 115 65 Z" fill="#64A1F4" opacity="0.6" />
+                
+                {/* Laptop Base */}
+                <rect x="50" y="88" width="130" height="8" rx="4" fill="#E8EDF5" />
+                <rect x="100" y="88" width="30" height="3" rx="1.5" fill="#B0C3DE" />
 
-            <p className="mt-3 text-xs sm:text-sm text-[#F7F1E5]/80 leading-relaxed">
-              {mode === 'login'
-                ? 'Get access to your Orders, Live Tracking and Fast Checkout.'
-                : 'Sign up to track orders, save multiple addresses and enjoy member benefits.'}
-            </p>
-          </div>
+                {/* Laptop Screen */}
+                <rect x="68" y="28" width="94" height="60" rx="4" fill="#FFFFFF" stroke="#385682" strokeWidth="3" />
+                <rect x="74" y="34" width="82" height="48" rx="2" fill="#F4F8FC" />
 
-          <div className="my-6 space-y-3">
-            <div className="flex items-center gap-2.5 text-xs text-[#F7F1E5]/90">
-              <div className="w-6 h-6 rounded-full bg-[#C49A4A]/20 flex items-center justify-center text-[#C49A4A] shrink-0">
-                <Package className="w-3.5 h-3.5" />
-              </div>
-              <span>Track all your raisin orders live</span>
+                {/* Avatar on laptop screen */}
+                <circle cx="115" cy="52" r="10" fill="#2874F0" opacity="0.25" />
+                <circle cx="115" cy="50" r="6" fill="#2874F0" />
+                <path d="M105 64 C105 58, 125 58, 125 64 Z" fill="#2874F0" />
+
+                {/* Shopping Bag beside laptop */}
+                <rect x="36" y="70" width="22" height="26" rx="2" fill="#FB641B" />
+                <path d="M42 70 C42 63, 52 63, 52 70" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+
+                {/* Heart badge floating */}
+                <circle cx="36" cy="100" r="10" fill="#FFFFFF" />
+                <path d="M32 99 C30 96, 35 94, 36 97 C37 94, 42 96, 40 99 L36 103 Z" fill="#FF4343" />
+
+                {/* Star Accent */}
+                <polygon points="180,45 183,52 190,53 185,58 186,65 180,61 174,65 175,58 170,53 177,52" fill="#FFE168" />
+              </svg>
             </div>
-            <div className="flex items-center gap-2.5 text-xs text-[#F7F1E5]/90">
-              <div className="w-6 h-6 rounded-full bg-[#C49A4A]/20 flex items-center justify-center text-[#C49A4A] shrink-0">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-              <span>100% Verified Farm-Direct Products</span>
-            </div>
           </div>
 
-          <div className="text-[11px] text-[#F7F1E5]/60 pt-4 border-t border-white/10">
-            🔒 Safe &amp; Secure 256-Bit Encrypted
-          </div>
-        </div>
-
-        {/* Right Side: Form Inputs */}
-        <div className="md:w-7/12 p-6 sm:p-8 flex flex-col justify-between bg-white">
-          {/* Mode Switcher Tabs */}
-          <div className="flex items-center border-b border-[#173B2A]/10 mb-6">
-            <button
-              type="button"
-              onClick={() => {
-                setMode('login');
-                setStep('input');
-              }}
-              className={`flex-1 pb-3 text-center text-sm font-semibold transition relative ${
-                mode === 'login'
-                  ? 'text-[#173B2A]'
-                  : 'text-[#6B4432]/60 hover:text-[#173B2A]'
-              }`}
-            >
-              Log In
-              {mode === 'login' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#173B2A]" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('signup');
-                setStep('input');
-              }}
-              className={`flex-1 pb-3 text-center text-sm font-semibold transition relative ${
-                mode === 'signup'
-                  ? 'text-[#173B2A]'
-                  : 'text-[#6B4432]/60 hover:text-[#173B2A]'
-              }`}
-            >
-              Sign Up
-              {mode === 'signup' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#173B2A]" />
-              )}
-            </button>
-          </div>
-
-          {step === 'input' ? (
-            <form onSubmit={handleRequestOtp} className="space-y-4">
-              <div>
-                <p className="text-xs text-[#6B4432] mb-3">
-                  {mode === 'login'
-                    ? 'Log in for the best experience & order history:'
-                    : 'Create your customer account in seconds:'}
-                </p>
+          {/* ======================================================== */}
+          {/* RIGHT PANEL: Form Inputs                                  */}
+          {/* ======================================================== */}
+          <div className="md:w-[58%] p-8 sm:p-10 flex flex-col justify-between bg-white">
+            {step === 'input' ? (
+              <form onSubmit={handleRequestOtp} className="space-y-6">
+                <div>
+                  <h3 className="text-base font-medium text-[#212121]">
+                    {mode === 'login' ? 'Log in for the best experience' : 'Create your account'}
+                  </h3>
+                  <p className="text-xs text-[#878787] mt-1">
+                    {mode === 'login' 
+                      ? 'Enter your phone number to continue' 
+                      : 'Enter your name and mobile number to proceed'}
+                  </p>
+                </div>
 
                 {mode === 'signup' && (
-                  <div className="mb-3.5">
-                    <label className="block text-[11px] font-semibold text-[#173B2A] mb-1 uppercase tracking-wide">
-                      Full Name *
-                    </label>
-                    <div className="relative">
-                      <User className="w-4 h-4 text-[#173B2A]/40 absolute left-3 top-3" />
+                  <div>
+                    <div className="relative border border-[#2874F0] rounded-sm pt-2.5 pb-2 px-3 focus-within:border-[#2874F0] focus-within:ring-1 focus-within:ring-[#2874F0]">
+                      <label className="absolute -top-2 left-2.5 bg-white px-1 text-[11px] font-medium text-[#2874F0]">
+                        Full Name
+                      </label>
                       <input
                         type="text"
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="e.g. Rahul Sharma"
-                        className="w-full h-11 pl-9 pr-3 rounded-xl border border-[#173B2A]/20 text-sm focus:outline-none focus:ring-2 focus:ring-[#173B2A]/30"
+                        placeholder="Enter your full name"
+                        className="w-full text-sm text-[#212121] focus:outline-none"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Mobile or Email Field */}
+                {/* Floating Outlined Input Box (Flipkart Style) */}
                 {!useEmail ? (
                   <div>
-                    <label className="block text-[11px] font-semibold text-[#173B2A] mb-1 uppercase tracking-wide">
-                      Mobile Number *
-                    </label>
-                    <div className="flex rounded-xl border border-[#173B2A]/20 overflow-hidden focus-within:ring-2 focus-within:ring-[#173B2A]/30">
-                      <span className="bg-[#F7F1E5] px-3.5 flex items-center text-xs font-semibold text-[#173B2A] border-r border-[#173B2A]/20 select-none">
-                        🇮🇳 +91
-                      </span>
-                      <input
-                        type="tel"
-                        required
-                        autoFocus
-                        value={phone}
-                        onChange={handlePhoneChange}
-                        placeholder="Enter 10 digit number"
-                        className="flex-1 h-11 px-3 text-sm focus:outline-none"
-                      />
+                    <div className="relative border border-[#2874F0] rounded-sm pt-2.5 pb-2 px-3 focus-within:border-[#2874F0] focus-within:ring-1 focus-within:ring-[#2874F0]">
+                      <label className="absolute -top-2 left-2.5 bg-white px-1 text-[11px] font-medium text-[#2874F0]">
+                        Phone Number
+                      </label>
+                      <div className="flex items-center text-sm">
+                        <span className="text-[#212121] font-medium mr-2 select-none">
+                          +91
+                        </span>
+                        <span className="text-gray-300 mr-2 select-none">|</span>
+                        <input
+                          type="tel"
+                          required
+                          autoFocus
+                          value={phone}
+                          onChange={handlePhoneChange}
+                          placeholder="Enter Phone Number"
+                          className="flex-1 text-sm text-[#212121] focus:outline-none tracking-wider font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="text-right mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setUseEmail(true)}
+                        className="text-xs font-semibold text-[#2874F0] hover:underline cursor-pointer"
+                      >
+                        Use Email-ID
+                      </button>
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-[11px] font-semibold text-[#173B2A] mb-1 uppercase tracking-wide">
-                      Email Address *
-                    </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-[#173B2A]/40 absolute left-3 top-3" />
+                    <div className="relative border border-[#2874F0] rounded-sm pt-2.5 pb-2 px-3 focus-within:border-[#2874F0] focus-within:ring-1 focus-within:ring-[#2874F0]">
+                      <label className="absolute -top-2 left-2.5 bg-white px-1 text-[11px] font-medium text-[#2874F0]">
+                        Email ID
+                      </label>
                       <input
                         type="email"
                         required
                         autoFocus
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="name@example.com"
-                        className="w-full h-11 pl-9 pr-3 rounded-xl border border-[#173B2A]/20 text-sm focus:outline-none focus:ring-2 focus:ring-[#173B2A]/30"
+                        placeholder="Enter your email address"
+                        className="w-full text-sm text-[#212121] focus:outline-none"
                       />
+                    </div>
+
+                    <div className="text-right mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setUseEmail(false)}
+                        className="text-xs font-semibold text-[#2874F0] hover:underline cursor-pointer"
+                      >
+                        Use Phone Number
+                      </button>
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Toggle Between Email and Phone */}
-              <div className="text-right">
+                {/* Disclaimer like in screenshot */}
+                <div className="text-[12px] text-[#878787] leading-relaxed">
+                  By continuing, you confirm that you are above 18 years of age, and you agree to the Real &amp; Natural&apos;s{' '}
+                  <span className="text-[#2874F0] font-medium cursor-pointer hover:underline">Terms of Use</span> and{' '}
+                  <span className="text-[#2874F0] font-medium cursor-pointer hover:underline">Privacy Policy</span>
+                </div>
+
+                {/* Flipkart Orange Continue Button */}
                 <button
-                  type="button"
-                  onClick={() => setUseEmail(!useEmail)}
-                  className="text-xs font-semibold text-[#173B2A] hover:text-[#C49A4A] transition underline underline-offset-2 cursor-pointer"
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-12 bg-[#FB641B] hover:bg-[#E85A15] text-white font-bold text-sm tracking-wide rounded-sm shadow-md transition cursor-pointer flex items-center justify-center disabled:opacity-70 uppercase"
                 >
-                  {useEmail ? 'Use Mobile Number' : 'Use Email-ID'}
-                </button>
-              </div>
-
-              <div className="text-[11px] text-[#6B4432]/80 leading-relaxed">
-                By continuing, you agree to Real &amp; Natural&apos;s{' '}
-                <span className="text-[#173B2A] font-semibold">Terms of Use</span> and{' '}
-                <span className="text-[#173B2A] font-semibold">Privacy Policy</span>.
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full h-12 rounded-full bg-[#173B2A] hover:bg-[#0F2A1D] text-[#F7F1E5] text-sm font-semibold transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
-              >
-                {isSubmitting ? (
-                  <span>Sending OTP...</span>
-                ) : (
-                  <>
-                    <span>Continue</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          ) : (
-            /* Step 2: OTP Verification */
-            <form onSubmit={handleVerifyOtp} className="space-y-5">
-              <div>
-                <div className="text-xs text-[#6B4432]">
-                  Please enter the 4-digit verification code sent to:
-                </div>
-                <div className="font-semibold text-sm text-[#173B2A] mt-0.5 flex items-center justify-between">
-                  <span>{useEmail ? email : `+91 ${phone}`}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep('input');
-                      setOtp(['', '', '', '']);
-                    }}
-                    className="text-xs text-[#C49A4A] hover:underline font-normal cursor-pointer"
-                  >
-                    Change
-                  </button>
-                </div>
-              </div>
-
-              {/* 4 Digit Boxes */}
-              <div className="flex justify-center gap-3 my-4">
-                {otp.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    ref={otpInputRefs[idx]}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-12 h-13 text-center text-xl font-bold font-mono rounded-xl border border-[#173B2A]/30 focus:border-[#173B2A] focus:ring-2 focus:ring-[#173B2A]/30 focus:outline-none bg-[#F7F1E5]/30"
-                  />
-                ))}
-              </div>
-
-              {/* Instant Verification Hint */}
-              <div className="text-center p-2.5 rounded-xl text-[11px] font-medium border transition bg-emerald-50 text-emerald-800 border-emerald-200/80">
-                {liveSmsActive ? (
-                  <span>📱 Live SMS OTP dispatched to your mobile number!</span>
-                ) : (
-                  <span>
-                    ✨ Code: Enter <span className="font-mono font-bold">{previewOtp || '1234'}</span> (or connect Fast2SMS in Vercel for live carrier SMS).
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-[#6B4432]">
-                <span>
-                  {timer > 0 ? (
-                    `Resend OTP in ${timer}s`
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" /> Sending OTP...
+                    </span>
                   ) : (
+                    'Continue'
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* OTP Verification Step */
+              <form onSubmit={handleVerifyOtp} className="space-y-6">
+                <div>
+                  <h3 className="text-base font-medium text-[#212121]">
+                    Please enter the OTP sent to
+                  </h3>
+                  <div className="flex items-center justify-between mt-1 text-sm font-semibold text-[#212121]">
+                    <span>{currentDisplayTarget}</span>
                     <button
                       type="button"
-                      onClick={handleResendOtp}
-                      className="font-semibold text-[#173B2A] hover:text-[#C49A4A] cursor-pointer"
+                      onClick={() => {
+                        setStep('input');
+                        setOtp(['', '', '', '']);
+                      }}
+                      className="text-xs text-[#2874F0] hover:underline font-medium cursor-pointer"
                     >
-                      Resend OTP
+                      Change
                     </button>
+                  </div>
+                </div>
+
+                {/* 4 Digit Boxes */}
+                <div className="flex justify-center gap-3 my-4">
+                  {otp.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={otpInputRefs[idx]}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      className="w-12 h-12 text-center text-xl font-bold font-mono rounded-sm border border-[#c2c2c2] focus:border-[#2874F0] focus:ring-1 focus:ring-[#2874F0] focus:outline-none bg-white text-[#212121]"
+                    />
+                  ))}
+                </div>
+
+                {/* Status / WhatsApp OTP Option */}
+                <div className="space-y-2">
+                  <div className="text-center p-2.5 rounded bg-blue-50 text-[#2874F0] text-xs font-medium border border-blue-100">
+                    {liveSmsActive ? (
+                      <span>📱 Live SMS OTP dispatched to your mobile number!</span>
+                    ) : (
+                      <span>
+                        Verification Code: <strong className="font-mono text-sm">{previewOtp || '1234'}</strong>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* WhatsApp option if SMS has delay */}
+                  {!liveSmsActive && (
+                    <a
+                      href={waOtpLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full py-2 px-3 rounded bg-emerald-50 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1.5 border border-emerald-200 hover:bg-emerald-100 transition"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Tap to receive &amp; confirm on WhatsApp</span>
+                    </a>
                   )}
-                </span>
-              </div>
+                </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full h-12 rounded-full bg-[#173B2A] hover:bg-[#0F2A1D] text-[#F7F1E5] text-sm font-semibold transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
-              >
-                {isSubmitting ? (
-                  <span>Verifying...</span>
-                ) : (
-                  <>
-                    <span>Verify &amp; Proceed</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
+                <div className="flex items-center justify-between text-xs text-[#878787]">
+                  <span>
+                    {timer > 0 ? (
+                      `Resend OTP in ${timer}s`
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        className="font-semibold text-[#2874F0] hover:underline cursor-pointer"
+                      >
+                        Resend OTP
+                      </button>
+                    )}
+                  </span>
+                </div>
 
-          {/* Bottom Switcher */}
-          <div className="mt-6 pt-4 border-t border-[#173B2A]/10 text-center text-xs text-[#6B4432]">
-            {mode === 'login' ? (
-              <span>
-                New to Real &amp; Natural?{' '}
+                {/* Orange Verify Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-12 bg-[#FB641B] hover:bg-[#E85A15] text-white font-bold text-sm tracking-wide rounded-sm shadow-md transition cursor-pointer flex items-center justify-center disabled:opacity-70 uppercase"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" /> Verifying...
+                    </span>
+                  ) : (
+                    'Verify & Log in'
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Bottom Switch Link */}
+            <div className="pt-6 border-t border-[#f0f0f0] text-center">
+              {mode === 'login' ? (
                 <button
                   type="button"
                   onClick={() => {
                     setMode('signup');
                     setStep('input');
                   }}
-                  className="font-bold text-[#173B2A] hover:text-[#C49A4A] transition underline underline-offset-2 cursor-pointer"
+                  className="text-[#2874F0] font-semibold text-sm hover:underline cursor-pointer"
                 >
-                  Create an account
+                  New to Real &amp; Natural? Create an account
                 </button>
-              </span>
-            ) : (
-              <span>
-                Existing User?{' '}
+              ) : (
                 <button
                   type="button"
                   onClick={() => {
                     setMode('login');
                     setStep('input');
                   }}
-                  className="font-bold text-[#173B2A] hover:text-[#C49A4A] transition underline underline-offset-2 cursor-pointer"
+                  className="text-[#2874F0] font-semibold text-sm hover:underline cursor-pointer"
                 >
-                  Log In
+                  Existing User? Log in
                 </button>
-              </span>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
