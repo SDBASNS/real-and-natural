@@ -25,11 +25,15 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
   const [otp, setOtp] = useState(['', '', '', '']);
   const [timer, setTimer] = useState(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [liveSmsActive, setLiveSmsActive] = useState(false);
+  const [previewOtp, setPreviewOtp] = useState('');
   const otpInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
   useEffect(() => {
     setMode(initialMode);
     setStep('input');
+    setLiveSmsActive(false);
+    setPreviewOtp('');
   }, [initialMode, isOpen]);
 
   useEffect(() => {
@@ -47,7 +51,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     setPhone(clean);
   };
 
-  const handleRequestOtp = (e) => {
+  const handleRequestOtp = async (e) => {
     e.preventDefault();
     if (mode === 'signup' && !name.trim()) {
       toast.error('Please enter your full name');
@@ -67,16 +71,38 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: useEmail ? '' : phone,
+          email: useEmail ? email : '',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send OTP');
+      }
+
+      setLiveSmsActive(Boolean(data.isLiveSms));
+      if (data.previewOtp) {
+        setPreviewOtp(data.previewOtp);
+      }
       setStep('otp');
       setTimer(30);
       toast.success(
-        useEmail 
+        data.isLiveSms 
+          ? `Real SMS OTP sent to +91 ${phone}!` 
+          : useEmail 
           ? `OTP sent to ${email}` 
           : `OTP sent to +91 ${phone}`
       );
-    }, 300);
+    } catch (err) {
+      toast.error(err.message || 'Error sending OTP');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleOtpChange = (index, value) => {
@@ -96,7 +122,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     }
   };
 
-  const handleVerifyOtp = (e) => {
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
     const enteredOtp = otp.join('');
     if (enteredOtp.length < 4) {
@@ -105,8 +131,20 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: useEmail ? '' : phone,
+          email: useEmail ? email : '',
+          otp: enteredOtp,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid OTP code');
+      }
 
       const customerName = name.trim() || (phone ? `Customer (${phone.slice(-4)})` : email.split('@')[0]);
       const customerData = {
@@ -126,14 +164,34 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
       toast.success(`Welcome to Real & Natural, ${customerName}!`);
       onLogin(customerData);
       onClose();
-    }, 400);
+    } catch (err) {
+      toast.error(err.message || 'OTP verification failed');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     if (timer > 0) return;
     setTimer(30);
     setOtp(['', '', '', '']);
-    toast.success('New OTP has been sent!');
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: useEmail ? '' : phone,
+          email: useEmail ? email : '',
+        }),
+      });
+      const data = await res.json();
+      if (data.previewOtp) {
+        setPreviewOtp(data.previewOtp);
+      }
+      toast.success('New OTP has been sent!');
+    } catch (_) {
+      toast.info('OTP resent');
+    }
   };
 
   return (
@@ -374,8 +432,14 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
               </div>
 
               {/* Instant Verification Hint */}
-              <div className="text-center p-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-[11px] font-medium border border-emerald-200/80">
-                ✨ Demo Code: Enter <span className="font-mono font-bold">1234</span> (or any 4 digits) to verify.
+              <div className="text-center p-2.5 rounded-xl text-[11px] font-medium border transition bg-emerald-50 text-emerald-800 border-emerald-200/80">
+                {liveSmsActive ? (
+                  <span>📱 Live SMS OTP dispatched to your mobile number!</span>
+                ) : (
+                  <span>
+                    ✨ Code: Enter <span className="font-mono font-bold">{previewOtp || '1234'}</span> (or connect Fast2SMS in Vercel for live carrier SMS).
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center justify-between text-xs text-[#6B4432]">
