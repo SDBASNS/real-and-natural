@@ -30,24 +30,34 @@ export async function POST(request) {
     const fast2SmsKey = process.env.FAST2SMS_API_KEY;
     if (fast2SmsKey && cleanPhone) {
       try {
-        const f2sRes = await fetch('https://www.fast2sms.com/dev/bulkV2', {
-          method: 'POST',
-          headers: {
-            'authorization': fast2SmsKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            route: 'otp',
-            variables_values: generatedOtp,
-            numbers: cleanPhone,
-          }),
-        });
+        const getUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${encodeURIComponent(fast2SmsKey)}&route=otp&variables_values=${generatedOtp}&flash=0&numbers=${cleanPhone}`;
+        const f2sRes = await fetch(getUrl, { method: 'GET' });
         const f2sData = await f2sRes.json();
-        if (f2sData && f2sData.return) {
+        if (f2sData && (f2sData.return === true || f2sData.status_code === 200)) {
           smsSent = true;
           provider = 'Fast2SMS';
         } else {
-          console.warn('[Fast2SMS] SMS response:', f2sData);
+          console.warn('[Fast2SMS] GET attempt response:', f2sData);
+          // Fallback to POST
+          const postRes = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+            method: 'POST',
+            headers: {
+              'authorization': fast2SmsKey,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              route: 'otp',
+              variables_values: String(generatedOtp),
+              numbers: cleanPhone,
+            }),
+          });
+          const postData = await postRes.json();
+          if (postData && (postData.return === true || postData.status_code === 200)) {
+            smsSent = true;
+            provider = 'Fast2SMS';
+          } else {
+            console.warn('[Fast2SMS] POST attempt response:', postData);
+          }
         }
       } catch (err) {
         console.error('[Fast2SMS] Exception:', err.message);
