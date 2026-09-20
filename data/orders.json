@@ -1,0 +1,100 @@
+[
+  {
+    "id": "RN-580870",
+    "createdAt": "2026-09-14T15:47:33.581Z",
+    "status": "Pending",
+    "customer": {
+      "name": "Rohit Nikam",
+      "phone": "7745835883",
+      "email": "",
+      "address": "Palus",
+      "city": "Sangli",
+      "state": "Maharashtra",
+      "pincode": "416310"
+    },
+    "paymentMethod": "COD",
+    "items": [
+      {
+        "id": "ea02de55-7455-4570-9d26-65b94b29aec9-250g",
+        "productId": "ea02de55-7455-4570-9d26-65b94b29aec9",
+        "slug": "golden-raisins-kishmish",
+        "name": "Golden Raisins (Kishmish)",
+        "image": "https://images.unsplash.com/photo-1642102903918-b97c37955bbf?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "pack": "250g",
+        "price": 199,
+        "mrp": 269,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 219,
+    "discount": 77,
+    "shipping": 49,
+    "total": 268
+  },
+  {
+    "id": "RN-962614",
+    "createdAt": "2026-09-14T11:53:00.258Z",
+    "status": "Pending",
+    "customer": {
+      "name": "Priya Sharma",
+      "phone": "9876543210",
+      "email": "priya@example.com",
+      "address": "702 Sunrise Towers, FC Road",
+      "city": "Pune",
+      "state": "Maharashtra",
+      "pincode": "411004"
+    },
+    "paymentMethod": "COD",
+    "items": [
+      {
+        "id": "ea02de55-7455-4570-9d26-65b94b29aec9-250g",
+        "name": "Golden Raisins (Kishmish)",
+        "pack": "250g",
+        "price": 199,
+        "mrp": 269,
+        "quantity": 2
+      }
+    ],
+    "subtotal": 398,
+    "discount": 140,
+    "shipping": 49,
+    "total": 447
+  },
+  {
+    "id": "RN-812049",
+    "createdAt": "2026-09-14T11:45:00.000Z",
+    "status": "Confirmed",
+    "customer": {
+      "name": "Ananya Sharma",
+      "phone": "9876543210",
+      "email": "ananya.sharma@example.com",
+      "address": "Flat 402, Green Meadows, Koregaon Park",
+      "city": "Pune",
+      "state": "Maharashtra",
+      "pincode": "411001"
+    },
+    "paymentMethod": "COD",
+    "items": [
+      {
+        "id": "ea02de55-7455-4570-9d26-65b94b29aec9-500g",
+        "name": "Golden Raisins (Kishmish)",
+        "pack": "500g",
+        "price": 368,
+        "mrp": 498,
+        "quantity": 2
+      },
+      {
+        "id": "d47caf69-a0bb-4cf4-948e-0ee46e8b9467-250g",
+        "name": "California Almonds (Badam)",
+        "pack": "250g",
+        "price": 329,
+        "mrp": 444,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 1085,
+    "discount": 389,
+    "shipping": 0,
+    "total": 1085
+  }
+]
