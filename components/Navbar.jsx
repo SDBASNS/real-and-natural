@@ -11,13 +11,15 @@ import {
   ShieldCheck, 
   Package, 
   LogOut, 
-  ChevronDown 
+  ChevronDown,
+  Heart
 } from 'lucide-react';
 
 export default function Navbar({ 
   currentView, 
   navigate, 
   cartCount = 0, 
+  wishlistCount = 0,
   onOpenSearch,
   customer = null,
   onOpenAuth = () => {},
@@ -186,26 +188,55 @@ export default function Navbar({
                 </button>
 
                 {accountMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-[#173B2A]/10 py-2 z-50 animate-fadeIn">
+                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-[#173B2A]/10 py-2 z-50 animate-fadeIn">
                     <div className="px-4 py-2 border-b border-[#173B2A]/10 text-xs">
                       <div className="font-bold text-[#173B2A] truncate">{customer.name}</div>
                       <div className="text-[10px] text-[#6B4432] truncate">{customer.phone || customer.email}</div>
                     </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => handleNavClick('account')}
+                      className="w-full px-4 py-2 text-left text-xs font-medium text-[#173B2A] hover:bg-[#F7F1E5] flex items-center gap-2 cursor-pointer"
+                    >
+                      <User className="w-4 h-4 text-[#C49A4A]" />
+                      <span>My Account &amp; Addresses</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => handleNavClick('orders')}
-                      className="w-full px-4 py-2 text-left text-xs font-medium text-[#173B2A] hover:bg-[#F7F1E5] flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-xs font-medium text-[#173B2A] hover:bg-[#F7F1E5] flex items-center gap-2 cursor-pointer"
                     >
                       <Package className="w-4 h-4 text-[#C49A4A]" />
-                      <span>My Orders</span>
+                      <span>My Orders &amp; Tracking</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleNavClick('account')}
+                      className="w-full px-4 py-2 text-left text-xs font-medium text-[#173B2A] hover:bg-[#F7F1E5] flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
+                        <span>My Wishlist</span>
+                      </div>
+                      {wishlistCount > 0 && (
+                        <span className="text-[10px] font-bold bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </button>
+
+                    <div className="my-1 border-t border-gray-100" />
+
                     <button
                       type="button"
                       onClick={() => {
                         setAccountMenuOpen(false);
                         onLogout();
                       }}
-                      className="w-full px-4 py-2 text-left text-xs font-medium text-rose-700 hover:bg-rose-50 flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-xs font-medium text-rose-700 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Log Out</span>
@@ -223,6 +254,21 @@ export default function Navbar({
                 <span>Login</span>
               </button>
             )}
+
+            {/* Wishlist Header Icon */}
+            <button
+              onClick={() => handleNavClick('account')}
+              className="relative p-2 text-[#173B2A] hover:text-rose-600 transition rounded-full hover:bg-white/60 cursor-pointer"
+              aria-label="Saved Wishlist"
+              title="Saved Wishlist"
+            >
+              <Heart className={`w-5 h-5 ${wishlistCount > 0 ? 'fill-rose-500 text-rose-500' : ''}`} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
 
             {/* Cart Button */}
             <button

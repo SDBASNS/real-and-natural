@@ -14,11 +14,13 @@ import AdminView from '@/components/AdminView';
 import SearchOverlay from '@/components/SearchOverlay';
 import AuthModal from '@/components/AuthModal';
 import MyOrdersView from '@/components/MyOrdersView';
+import MyAccountView from '@/components/MyAccountView';
 
 export default function AppShell({ initialProducts }) {
   const [currentView, setCurrentView] = useState('home');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const [placedOrder, setPlacedOrder] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [shopCategory, setShopCategory] = useState('All');
@@ -28,12 +30,16 @@ export default function AppShell({ initialProducts }) {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
 
-  // Load cart & customer from localStorage on mount
+  // Load cart, wishlist & customer from localStorage on mount
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('rn_cart');
       if (savedCart) {
         setCart(JSON.parse(savedCart));
+      }
+      const savedWishlist = localStorage.getItem('rn_wishlist');
+      if (savedWishlist) {
+        setWishlist(JSON.parse(savedWishlist));
       }
       const savedCustomer = localStorage.getItem('rn_customer');
       if (savedCustomer) {
@@ -43,6 +49,22 @@ export default function AppShell({ initialProducts }) {
       console.error('Failed to load storage data:', err);
     }
   }, []);
+
+  const handleToggleWishlist = (item) => {
+    const exists = wishlist.some((w) => w.productId === item.productId || w.id === item.id);
+    let updated;
+    if (exists) {
+      updated = wishlist.filter((w) => w.productId !== item.productId && w.id !== item.id);
+      toast.info(`Removed ${item.name} from wishlist`);
+    } else {
+      updated = [...wishlist, item];
+      toast.success(`Saved ${item.name} to wishlist ❤️`);
+    }
+    setWishlist(updated);
+    try {
+      localStorage.setItem('rn_wishlist', JSON.stringify(updated));
+    } catch (_) {}
+  };
 
   // Sync cart with localStorage
   const updateCartAndPersist = (newCart) => {
@@ -140,6 +162,7 @@ export default function AppShell({ initialProducts }) {
         currentView={currentView}
         navigate={navigate}
         cartCount={totalCartCount}
+        wishlistCount={wishlist.length}
         onOpenSearch={() => setIsSearchOpen(true)}
         customer={customer}
         onOpenAuth={() => openAuth('login')}
@@ -154,6 +177,8 @@ export default function AppShell({ initialProducts }) {
             onAddToCart={handleAddToCart}
             onBuyNow={handleBuyNow}
             navigate={navigate}
+            wishlist={wishlist}
+            onToggleWishlist={handleToggleWishlist}
           />
         )}
 
@@ -164,6 +189,8 @@ export default function AppShell({ initialProducts }) {
             onAddToCart={handleAddToCart}
             onBuyNow={handleBuyNow}
             initialCategory={shopCategory}
+            wishlist={wishlist}
+            onToggleWishlist={handleToggleWishlist}
           />
         )}
 
@@ -174,6 +201,18 @@ export default function AppShell({ initialProducts }) {
             onBuyNow={handleBuyNow}
             onSelectProduct={handleSelectProduct}
             navigate={navigate}
+          />
+        )}
+
+        {currentView === 'account' && (
+          <MyAccountView
+            customer={customer}
+            onLogout={handleLogout}
+            navigate={navigate}
+            wishlist={wishlist}
+            onToggleWishlist={handleToggleWishlist}
+            onAddToCart={handleAddToCart}
+            onOpenAuth={() => openAuth('login')}
           />
         )}
 

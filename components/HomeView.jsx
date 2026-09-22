@@ -17,6 +17,8 @@ export default function HomeView({
   onAddToCart,
   onBuyNow,
   navigate,
+  wishlist = [],
+  onToggleWishlist = () => {},
 }) {
   const featuredProduct = products.find((p) => p.slug === 'golden-raisins-kishmish') || products[0];
 
@@ -47,6 +49,8 @@ export default function HomeView({
                 onSelectProduct={onSelectProduct}
                 onAddToCart={onAddToCart}
                 onBuyNow={onBuyNow}
+                onToggleWishlist={onToggleWishlist}
+                isWishlisted={wishlist.some((w) => w.productId === product.id)}
               />
             </div>
           ))}

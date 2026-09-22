@@ -10,6 +10,8 @@ export default function ShopView({
   onAddToCart,
   onBuyNow,
   initialCategory = 'All',
+  wishlist = [],
+  onToggleWishlist = () => {},
 }) {
   const categories = ['All', ...Array.from(new Set(products.map((p) => p.category)))];
   const [selectedCategory, setSelectedCategory] = useState(
@@ -106,6 +108,8 @@ export default function ShopView({
             onSelectProduct={onSelectProduct}
             onAddToCart={onAddToCart}
             onBuyNow={onBuyNow}
+            onToggleWishlist={onToggleWishlist}
+            isWishlisted={wishlist.some((w) => w.productId === product.id)}
           />
         ))}
       </div>

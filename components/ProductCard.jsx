@@ -1,9 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Star, ShoppingCart, Zap } from 'lucide-react';
+import { Star, ShoppingCart, Zap, Heart } from 'lucide-react';
 
-export default function ProductCard({ product, onSelectProduct, onAddToCart, onBuyNow }) {
+export default function ProductCard({ 
+  product, 
+  onSelectProduct, 
+  onAddToCart, 
+  onBuyNow, 
+  onToggleWishlist = () => {}, 
+  isWishlisted = false 
+}) {
   const [selectedPackIndex, setSelectedPackIndex] = useState(0);
   const currentPack = product.packs[selectedPackIndex] || product.packs[0];
   const discountPercent = Math.round(((currentPack.mrp - currentPack.price) / currentPack.mrp) * 100);
@@ -38,8 +45,21 @@ export default function ProductCard({ product, onSelectProduct, onAddToCart, onB
     });
   };
 
+  const handleWishlistClick = (e) => {
+    e.stopPropagation();
+    onToggleWishlist({
+      id: `${product.id}-${currentPack.size}`,
+      productId: product.id,
+      name: product.name,
+      image: product.image,
+      pack: currentPack.size,
+      price: currentPack.price,
+      mrp: currentPack.mrp,
+    });
+  };
+
   return (
-    <div className="group bg-white rounded-2xl border border-[#173B2A]/8 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+    <div className="group bg-white rounded-2xl border border-[#173B2A]/8 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative">
       {/* Product Image */}
       <div
         onClick={() => onSelectProduct(product)}
@@ -53,16 +73,19 @@ export default function ProductCard({ product, onSelectProduct, onAddToCart, onB
         />
 
         {product.bestSeller && (
-          <span className="absolute top-3 left-3 bg-[#C49A4A] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow">
+          <span className="absolute top-3 left-3 bg-[#C49A4A] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow z-10">
             Best Seller
           </span>
         )}
 
-        {discountPercent > 0 && (
-          <span className="absolute top-3 right-3 bg-[#173B2A] text-[#F7F1E5] text-xs font-bold px-2.5 py-1 rounded-full shadow">
-            {discountPercent}% OFF
-          </span>
-        )}
+        <button
+          type="button"
+          onClick={handleWishlistClick}
+          className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow-md text-rose-500 hover:scale-110 transition z-10 cursor-pointer"
+          aria-label="Wishlist product"
+        >
+          <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-rose-500' : ''}`} />
+        </button>
       </div>
 
       {/* Product Info */}
