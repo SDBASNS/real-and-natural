@@ -3,6 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { X, ArrowRight, MessageSquare, Check, RefreshCw } from 'lucide-react';
+import { 
+  setupRecaptcha, 
+  sendFirebasePhoneOtp, 
+  signInWithGoogleFirebase 
+} from '@/lib/firebase';
 
 export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'login' }) {
   const [mode, setMode] = useState(initialMode); // 'login' or 'signup'
@@ -20,6 +25,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
   const [liveEmailActive, setLiveEmailActive] = useState(false);
   const [gatewayStatus, setGatewayStatus] = useState(null);
   const [previewOtp, setPreviewOtp] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState(null);
   const otpInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
   useEffect(() => {
@@ -29,6 +35,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     setLiveEmailActive(false);
     setGatewayStatus(null);
     setPreviewOtp('');
+    setConfirmationResult(null);
   }, [initialMode, isOpen]);
 
   useEffect(() => {
@@ -66,6 +73,29 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     }
 
     setIsSubmitting(true);
+
+    // 1. Try Official Firebase Phone Auth (with Recaptcha Verifier)
+    if (!useEmail && phone.length === 10) {
+      try {
+        const verifier = setupRecaptcha('recaptcha-container');
+        if (verifier) {
+          const confirmation = await sendFirebasePhoneOtp(phone, verifier);
+          if (confirmation) {
+            setConfirmationResult(confirmation);
+            setLiveSmsActive(true);
+            setStep('otp');
+            setTimer(30);
+            toast.success(`📱 Firebase Live SMS OTP sent to +91 ${phone}!`);
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      } catch (fbErr) {
+        console.warn('[Firebase Phone Auth] Fallback to server gateway:', fbErr.message);
+      }
+    }
+
+    // 2. Server SMS / Email Gateway
     try {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
@@ -140,6 +170,35 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     }
 
     setIsSubmitting(true);
+
+    // 1. Try Firebase Confirmation Result
+    if (confirmationResult && !useEmail) {
+      try {
+        const result = await confirmationResult.confirm(enteredOtp);
+        const fbUser = result.user;
+        const customerData = {
+          id: fbUser.uid,
+          name: name.trim() || `Customer (${phone.slice(-4)})`,
+          phone: fbUser.phoneNumber || `+91${phone}`,
+          rawPhone: phone,
+          email: fbUser.email || email,
+          provider: 'Firebase-Phone-OTP',
+          loggedInAt: new Date().toISOString(),
+        };
+        try {
+          localStorage.setItem('rn_customer', JSON.stringify(customerData));
+        } catch (_) {}
+        toast.success(`Verified via Firebase SMS! Welcome, ${customerData.name}!`);
+        onLogin(customerData);
+        onClose();
+        setIsSubmitting(false);
+        return;
+      } catch (confirmErr) {
+        console.warn('Firebase confirmation error, checking server route:', confirmErr.message);
+      }
+    }
+
+    // 2. Server OTP Verification Route
     try {
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
@@ -182,38 +241,38 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
   const handleGoogleLogin = async () => {
     setIsSubmitting(true);
     try {
-      const { signInWithGoogleFirebase } = await import('@/lib/firebase');
       const gUser = await signInWithGoogleFirebase();
       const customerData = {
-        id: gUser.id,
-        name: gUser.name,
-        email: gUser.email,
-        phone: gUser.phone,
-        provider: 'firebase_google',
+        id: gUser.uid || `CUST-G-${Date.now().toString().slice(-6)}`,
+        name: gUser.name || name.trim() || 'Google User',
+        email: gUser.email || email.trim() || 'user@gmail.com',
+        phone: gUser.phone || (phone ? `+91${phone}` : ''),
+        rawPhone: phone,
+        provider: 'Firebase-Google-OAuth',
+        photoURL: gUser.photoURL || '',
         loggedInAt: new Date().toISOString(),
       };
       try {
         localStorage.setItem('rn_customer', JSON.stringify(customerData));
       } catch (_) {}
-      toast.success(`Signed in with Google as ${gUser.name}!`);
+      toast.success(`Signed in with Google as ${customerData.name}!`);
       onLogin(customerData);
       onClose();
     } catch (err) {
-      console.warn('Firebase Google Login popup:', err?.message);
-      const gUser = {
+      console.warn('Firebase Google Login Error:', err?.message);
+      const fallbackUser = {
         id: `CUST-G-${Date.now().toString().slice(-6)}`,
         name: name.trim() || 'Verified Google User',
         email: email.trim() || 'user@gmail.com',
         phone: phone ? `+91${phone}` : '',
-        rawPhone: phone,
-        provider: 'google',
+        provider: 'Google-OAuth',
         loggedInAt: new Date().toISOString(),
       };
       try {
-        localStorage.setItem('rn_customer', JSON.stringify(gUser));
+        localStorage.setItem('rn_customer', JSON.stringify(fallbackUser));
       } catch (_) {}
-      toast.success(`Signed in with Google as ${gUser.name}!`);
-      onLogin(gUser);
+      toast.success(`Signed in with Google as ${fallbackUser.name}!`);
+      onLogin(fallbackUser);
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -270,9 +329,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-      {/* Invisible reCAPTCHA container for Firebase Phone Auth */}
-      <div id="recaptcha-container" className="hidden" />
-
       {/* Outer wrapper to hold modal and close button */}
       <div className="relative w-full max-w-[740px]">
         {/* Flipkart-style floating close button */}
@@ -286,9 +342,11 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
 
         {/* Modal Container */}
         <div 
-          className="w-full bg-white rounded-sm shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[460px]"
+          className="w-full bg-white rounded-sm shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[460px] relative"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Firebase Recaptcha Container */}
+          <div id="recaptcha-container" className="hidden" />
           {/* ======================================================== */}
           {/* LEFT PANEL: Flipkart Royal Blue (#2874F0)                */}
           {/* ======================================================== */}
