@@ -17,6 +17,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
   const [timer, setTimer] = useState(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [liveSmsActive, setLiveSmsActive] = useState(false);
+  const [liveEmailActive, setLiveEmailActive] = useState(false);
   const [gatewayStatus, setGatewayStatus] = useState(null);
   const [previewOtp, setPreviewOtp] = useState('');
   const otpInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
@@ -25,6 +26,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     setMode(initialMode);
     setStep('input');
     setLiveSmsActive(false);
+    setLiveEmailActive(false);
     setGatewayStatus(null);
     setPreviewOtp('');
   }, [initialMode, isOpen]);
@@ -79,11 +81,13 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
       }
 
       setLiveSmsActive(Boolean(data.isLiveSms));
+      setLiveEmailActive(Boolean(data.isLiveEmail));
       if (data.previewOtp) {
         setPreviewOtp(data.previewOtp);
       }
       setGatewayStatus({
         isLiveSms: Boolean(data.isLiveSms),
+        isLiveEmail: Boolean(data.isLiveEmail),
         hasKey: Boolean(data.hasKey),
         provider: data.provider,
         debug: data.debug,
@@ -93,11 +97,13 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
 
       if (data.isLiveSms) {
         toast.success(`📱 SMS OTP sent to +91 ${phone}!`);
-      } else if (!data.hasKey) {
+      } else if (data.isLiveEmail) {
+        toast.success(`📧 Live Email OTP sent to ${email}! Check your inbox.`);
+      } else if (!data.hasKey && !useEmail) {
         toast.info('Fast2SMS key added in Vercel needs a Redeploy to activate live SMS.', { duration: 6000 });
       } else if (data.debug?.message) {
         const msg = Array.isArray(data.debug.message) ? data.debug.message[0] : String(data.debug.message);
-        toast.info(`Fast2SMS Gateway: ${msg}`, { duration: 6000 });
+        toast.info(`Gateway: ${msg}`, { duration: 6000 });
       } else {
         toast.success(useEmail ? `OTP sent to ${email}` : `OTP sent to +91 ${phone}`);
       }
@@ -529,6 +535,16 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
                         Please check your phone's SMS messages inbox.
                       </p>
                     </div>
+                  ) : liveEmailActive ? (
+                    <div className="text-center p-3 rounded bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        <span>📧 Real Email OTP sent to {email}!</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 font-normal mt-1">
+                        Please check your email inbox (and Spam folder).
+                      </p>
+                    </div>
                   ) : (
                     <div className="p-3 rounded bg-blue-50/90 text-[#2874F0] text-xs font-medium border border-blue-100 space-y-2">
                       <div className="flex items-center justify-between">
@@ -546,7 +562,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
 
                       {gatewayStatus && !gatewayStatus.hasKey && (
                         <div className="text-[11px] text-amber-900 bg-amber-50 p-2 rounded border border-amber-200 text-left">
-                          ⚠️ <strong>Vercel Action Needed:</strong> FAST2SMS_API_KEY was added in Vercel. In Vercel, click <strong>Deployments &rarr; ... &rarr; Redeploy</strong> so the environment variable takes effect.
+                          ⚠️ <strong>Vercel Action Needed:</strong> Add <code>RESEND_API_KEY</code> or <code>FAST2SMS_API_KEY</code> in Vercel settings and trigger a <strong>Redeploy</strong> to enable live delivery.
                         </div>
                       )}
 
