@@ -609,7 +609,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
                     <div className="text-center p-3 rounded bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
                       <div className="flex items-center justify-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                        <span>📱 Real SMS OTP sent to +91 {phone}!</span>
+                        <span>📱 Live SMS OTP sent to +91 {phone}!</span>
                       </div>
                       <p className="text-[11px] text-emerald-700 font-normal mt-1">
                         Please check your phone's SMS messages inbox.
@@ -619,38 +619,15 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
                     <div className="text-center p-3 rounded bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
                       <div className="flex items-center justify-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                        <span>📧 Real Email OTP sent to {email}!</span>
+                        <span>📧 Live Email OTP sent to {email}!</span>
                       </div>
                       <p className="text-[11px] text-emerald-700 font-normal mt-1">
                         Please check your email inbox (and Spam folder).
                       </p>
                     </div>
                   ) : (
-                    <div className="p-3 rounded bg-blue-50/90 text-[#2874F0] text-xs font-medium border border-blue-100 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span>
-                          Verification Code: <strong className="font-mono text-sm tracking-wider text-[#212121]">{previewOtp || '1234'}</strong>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleAutoFillOtp(previewOtp || '1234')}
-                          className="text-[11px] bg-[#2874F0] text-white px-2 py-0.5 rounded font-semibold hover:bg-blue-700 transition cursor-pointer"
-                        >
-                          Auto-fill
-                        </button>
-                      </div>
-
-                      {gatewayStatus && !gatewayStatus.hasKey && (
-                        <div className="text-[11px] text-amber-900 bg-amber-50 p-2 rounded border border-amber-200 text-left">
-                          ⚠️ <strong>Vercel Action Needed:</strong> Add <code>RESEND_API_KEY</code> or <code>FAST2SMS_API_KEY</code> in Vercel settings and trigger a <strong>Redeploy</strong> to enable live delivery.
-                        </div>
-                      )}
-
-                      {gatewayStatus?.debug?.message && (
-                        <div className="text-[11px] text-gray-600 bg-white p-2 rounded border border-gray-200 text-left font-sans">
-                          <strong>Gateway status:</strong> {Array.isArray(gatewayStatus.debug.message) ? gatewayStatus.debug.message.join(', ') : JSON.stringify(gatewayStatus.debug.message)}
-                        </div>
-                      )}
+                    <div className="text-center p-3 rounded bg-blue-50/90 text-[#2874F0] text-xs font-medium border border-blue-100">
+                      <span>An OTP verification code has been dispatched to <strong>{currentDisplayTarget}</strong>. Please enter the 4-digit code below.</span>
                     </div>
                   )}
 

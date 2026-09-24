@@ -144,12 +144,17 @@ export async function POST(request) {
     }
 
     // B. FAST2SMS Integration (Instant Indian SMS Gateway)
-    const fast2SmsKey = (process.env.FAST2SMS_API_KEY || '').trim();
+    const fast2SmsKey = (process.env.FAST2SMS_API_KEY || '').trim().replace(/^["']|["']$/g, '');
     if (fast2SmsKey && cleanPhone) {
       try {
-        // Attempt 1: Dedicated numeric OTP route (GET)
+        // Attempt 1: Dedicated numeric OTP route (GET with Authorization header + query)
         const getOtpUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${encodeURIComponent(fast2SmsKey)}&route=otp&variables_values=${generatedOtp}&flash=0&numbers=${cleanPhone}`;
-        const f2sRes = await fetch(getOtpUrl, { method: 'GET' });
+        const f2sRes = await fetch(getOtpUrl, { 
+          method: 'GET',
+          headers: {
+            'authorization': fast2SmsKey,
+          }
+        });
         const f2sData = await f2sRes.json().catch(() => null);
         fast2smsDebug = f2sData;
 
@@ -162,7 +167,12 @@ export async function POST(request) {
           // Attempt 2: Quick SMS route=q without DLT requirement
           const qMsg = `Your Real & Natural login code is ${generatedOtp}. Valid for 5 minutes.`;
           const getQUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${encodeURIComponent(fast2SmsKey)}&route=q&message=${encodeURIComponent(qMsg)}&language=english&flash=0&numbers=${cleanPhone}`;
-          const qRes = await fetch(getQUrl, { method: 'GET' });
+          const qRes = await fetch(getQUrl, { 
+            method: 'GET',
+            headers: {
+              'authorization': fast2SmsKey,
+            }
+          });
           const qData = await qRes.json().catch(() => null);
 
           if (qData && (qData.return === true || qData.status_code === 200)) {
@@ -238,7 +248,7 @@ export async function POST(request) {
     }
 
     const isLive = smsSent || emailSent;
-    console.log(`[AUTH] OTP for ${key}: ${generatedOtp} (Provider: ${provider}, Live: ${isLive})`);
+    console.log(`[AUTH] OTP dispatched to ${key} (Provider: ${provider}, Live: ${isLive})`);
 
     return NextResponse.json({
       success: true,
@@ -248,7 +258,6 @@ export async function POST(request) {
       provider,
       hasKey: Boolean(fast2SmsKey || process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_SUPABASE_URL),
       debug: fast2smsDebug || emailDebug,
-      previewOtp: generatedOtp,
     });
   } catch (error) {
     console.error('Send OTP Error:', error);
