@@ -93,7 +93,14 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
           }
         }
       } catch (fbErr) {
-        console.warn('[Firebase Phone Auth] Fallback to server gateway:', fbErr.message);
+        console.warn('[Firebase Phone Auth] Fallback to server gateway:', fbErr.code, fbErr.message);
+        if (fbErr.code === 'auth/unauthorized-domain') {
+          toast.info('Firebase SMS notice: Add real-and-natural.onrender.com to Firebase Authorized Domains', { duration: 6000 });
+        } else if (fbErr.code === 'auth/operation-not-allowed') {
+          toast.info('Firebase SMS notice: Enable Phone sign-in in Firebase Console', { duration: 6000 });
+        } else if (fbErr.code === 'auth/captcha-check-failed' || fbErr.code === 'auth/invalid-app-credential') {
+          toast.info('Firebase Safety Check: Verify SafetyNet / reCAPTCHA in Firebase settings', { duration: 6000 });
+        }
       }
     }
 
