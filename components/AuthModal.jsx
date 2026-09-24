@@ -141,8 +141,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
         toast.success(`📱 SMS OTP sent to +91 ${phone}!`);
       } else if (data.isLiveEmail) {
         toast.success(`📧 Live Email OTP sent to ${email}! Check your inbox.`);
-      } else if (!data.hasKey && !useEmail) {
-        toast.info('Fast2SMS key added in Vercel needs a Redeploy to activate live SMS.', { duration: 6000 });
       } else if (data.debug?.message) {
         const msg = Array.isArray(data.debug.message) ? data.debug.message[0] : String(data.debug.message);
         toast.info(`Gateway: ${msg}`, { duration: 6000 });
