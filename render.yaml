@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: real-and-natural
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_TOKEN
+        value: admin123
+      - key: NEXT_PUBLIC_RAZORPAY_KEY_ID
+        value: rzp_test_TeLA1nHtQrqrMI
+      - key: RAZORPAY_KEY_SECRET
+        value: QjXcl5wrffcrahyO8so9EVd7
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        value: https://crtzcbxtguzkogtnvoud.supabase.co
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNydHpjYnh0Z3V6a29ndG52b3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MTU5MTEsImV4cCI6MjEwNTQ5MTkxMX0.Ym17WCtkPTpZOeAWQgHd8VPomToIleO1k_aacdfgZLM
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNydHpjYnh0Z3V6a29ndG52b3VkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTkxNTkxMSwiZXhwIjoyMTA1NDkxOTExfQ.uwab5I0NTaKWV0sM68eRgObMFPAwLPUlt4Q-SlO60Kw
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        value: AIzaSyCyJmantoQHZpm207NquIJY_wRpabNSErI
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        value: real-and-natural.firebaseapp.com
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        value: real-and-natural
+      - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        value: real-and-natural.firebasestorage.app
+      - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        value: "725600837628"
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        value: "1:725600837628:web:60e23ecc1f1daf52ee1c79"
+      - key: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+        value: G-9TPNPTFCPV
