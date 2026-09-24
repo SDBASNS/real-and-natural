@@ -130,7 +130,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
       setGatewayStatus({
         isLiveSms: Boolean(data.isLiveSms),
         isLiveEmail: Boolean(data.isLiveEmail),
-        hasKey: Boolean(data.hasKey),
         provider: data.provider,
         debug: data.debug,
       });
@@ -313,7 +312,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
       setLiveSmsActive(Boolean(data.isLiveSms));
       setGatewayStatus({
         isLiveSms: Boolean(data.isLiveSms),
-        hasKey: Boolean(data.hasKey),
         provider: data.provider,
         debug: data.debug,
       });
