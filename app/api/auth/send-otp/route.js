@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -250,6 +251,12 @@ export async function POST(request) {
     const isLive = smsSent || emailSent;
     console.log(`[AUTH] OTP dispatched to ${key} (Provider: ${provider}, Live: ${isLive})`);
 
+    const secret = process.env.ADMIN_TOKEN || process.env.SUPABASE_SERVICE_ROLE_KEY || 'rn_secret_otp_key_2026';
+    const hash = crypto.createHmac('sha256', secret)
+      .update(`${key}:${generatedOtp}:${expiresAt}`)
+      .digest('hex');
+    const otpToken = Buffer.from(JSON.stringify({ key, expiresAt, hash })).toString('base64');
+
     return NextResponse.json({
       success: true,
       message: isLive ? `OTP sent via ${provider}` : 'OTP generated',
@@ -258,6 +265,7 @@ export async function POST(request) {
       provider,
       hasKey: Boolean(fast2SmsKey || process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_SUPABASE_URL),
       debug: fast2smsDebug || emailDebug,
+      otpToken,
     });
   } catch (error) {
     console.error('Send OTP Error:', error);

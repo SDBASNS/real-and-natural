@@ -25,6 +25,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
   const [liveEmailActive, setLiveEmailActive] = useState(false);
   const [gatewayStatus, setGatewayStatus] = useState(null);
   const [previewOtp, setPreviewOtp] = useState('');
+  const [otpToken, setOtpToken] = useState('');
   const [confirmationResult, setConfirmationResult] = useState(null);
   const otpInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
@@ -35,6 +36,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
     setLiveEmailActive(false);
     setGatewayStatus(null);
     setPreviewOtp('');
+    setOtpToken('');
     setConfirmationResult(null);
   }, [initialMode, isOpen]);
 
@@ -112,6 +114,9 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
 
       setLiveSmsActive(Boolean(data.isLiveSms));
       setLiveEmailActive(Boolean(data.isLiveEmail));
+      if (data.otpToken) {
+        setOtpToken(data.otpToken);
+      }
       if (data.previewOtp) {
         setPreviewOtp(data.previewOtp);
       }
@@ -207,6 +212,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
           phone: useEmail ? '' : phone,
           email: useEmail ? email : '',
           otp: enteredOtp,
+          otpToken,
         }),
       });
       const data = await res.json();
@@ -293,6 +299,9 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
         }),
       });
       const data = await res.json();
+      if (data.otpToken) {
+        setOtpToken(data.otpToken);
+      }
       if (data.previewOtp) {
         setPreviewOtp(data.previewOtp);
       }
