@@ -143,37 +143,6 @@ export async function POST(request) {
       }
     }
 
-    // B. TWILIO SMS Gateway
-    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
-    const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-    if (!smsSent && twilioSid && twilioAuth && twilioFrom && cleanPhone) {
-      try {
-        const body = new URLSearchParams({
-          To: `+91${cleanPhone}`,
-          From: twilioFrom,
-          Body: `Your Real & Natural OTP is: ${generatedOtp}. Valid for 5 minutes.`,
-        });
-        const twilioRes = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Basic ' + Buffer.from(`${twilioSid}:${twilioAuth}`).toString('base64'),
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: body.toString(),
-          }
-        );
-        if (twilioRes.ok) {
-          smsSent = true;
-          provider = 'Twilio';
-        }
-      } catch (err) {
-        console.error('[Twilio] Exception:', err.message);
-      }
-    }
-
     const isLive = smsSent || emailSent;
     console.log(`[AUTH] OTP dispatched to ${key} (Provider: ${provider}, Live: ${isLive})`);
 
