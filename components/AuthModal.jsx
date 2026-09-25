@@ -97,9 +97,11 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
         if (fbErr.code === 'auth/unauthorized-domain') {
           toast.info('Firebase SMS notice: Add real-and-natural.onrender.com to Firebase Authorized Domains', { duration: 6000 });
         } else if (fbErr.code === 'auth/operation-not-allowed') {
-          toast.info('Firebase SMS notice: Enable Phone sign-in in Firebase Console', { duration: 6000 });
+          toast.info('Firebase SMS notice: Enable Phone sign-in in Firebase Console (Authentication -> Sign-in method -> Phone)', { duration: 8000 });
         } else if (fbErr.code === 'auth/captcha-check-failed' || fbErr.code === 'auth/invalid-app-credential') {
-          toast.info('Firebase Safety Check: Verify SafetyNet / reCAPTCHA in Firebase settings', { duration: 6000 });
+          toast.info('Firebase Safety Check: Verify reCAPTCHA / App Credentials in Firebase settings', { duration: 6000 });
+        } else {
+          toast.info(`Firebase Auth notice (${fbErr.code || 'notice'}): ${fbErr.message}`, { duration: 6000 });
         }
       }
     }
@@ -358,7 +360,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialMode = 'log
           onClick={(e) => e.stopPropagation()}
         >
           {/* Firebase Recaptcha Container */}
-          <div id="recaptcha-container" className="hidden" />
+          <div id="recaptcha-container" className="opacity-0 absolute pointer-events-none" />
           {/* ======================================================== */}
           {/* LEFT PANEL: Flipkart Royal Blue (#2874F0)                */}
           {/* ======================================================== */}
